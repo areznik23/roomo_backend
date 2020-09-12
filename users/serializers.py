@@ -5,13 +5,16 @@ from .models import Profile
 from rest_framework import serializers
 
 User._meta.get_field('email')._unique = True
-
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ('id','bio', 'gender', 'image',  'loudness', 'athleticism','musicality','university')
 
 class UserSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer()
     class Meta:
         model = User
-        fields = ('id', 'username', 'email')
-
+        fields = ('id', 'username', 'email', 'profile')
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -19,11 +22,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
+        
         user = User.objects.create_user(
             validated_data['username'],
             validated_data['email'],
-            validated_data['password']
+            validated_data['password'],
         )
+        
         return user
 
 
@@ -36,10 +41,3 @@ class LoginSerializer(serializers.Serializer):
         if user and user.is_active:
             return user
         raise serializers.ValidationError("Incorrect Credentials")
-
-class ProfileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Profile
-
-       fields = ('bio', 'user', 'gender', 'image', 'preferences')
-

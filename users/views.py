@@ -15,6 +15,7 @@ class RegisterAPIView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        
         return Response({
             "user": UserSerializer(user, context=self.get_serializer_context()).data,
             "token": AuthToken.objects.create(user)[1]
@@ -32,25 +33,12 @@ class LoginAPIView(generics.GenericAPIView):
             "user": UserSerializer(user, context=self.get_serializer_context()).data,
             "token": AuthToken.objects.create(user)[1]
         })
-
-@api_view(['GET', 'PATCH'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def current_user_profile(request):
-
-    try:
-        profile =Profile.objects.get(user=request.user)
-    except Profile.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = ProfileSerializer(profile, context={'request': request})
+@api_view(['PUT'])
+def update_profile(request):
+    profile=Profile.objects.get(user=request.user)
+    serializer = ProfileSerializer(
+        profile, data=request.data, context={'request': request})
+    if serializer.is_valid():
+        serializer.save()
         return Response(serializer.data)
-
-    elif request.method == 'PATCH':
-        serializer = ProfileSerializer(
-            profile, data=request.data, context={'request': request}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

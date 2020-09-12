@@ -41,7 +41,7 @@ INSTALLED_APPS = [
 
     'users.apps.UsersConfig',
     'selections.apps.SelectionsConfig',
-
+    'django_cleanup.apps.CleanupConfig',
     'rest_framework',
     'corsheaders',
     'knox'
