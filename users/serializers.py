@@ -40,4 +40,6 @@ class LoginSerializer(serializers.Serializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
+
        fields = ('bio', 'user', 'gender', 'image', 'preferences')
+
