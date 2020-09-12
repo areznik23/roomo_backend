@@ -4,6 +4,7 @@ from .serializers import FollowSerializer, MatchSerializer, UserOptionViewSerial
 from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
+from users.serializers import UserSerializer
 import random
 
 @api_view(['POST'])
