@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 from rest_framework import serializers
-=======
-
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from .models import Profile
@@ -45,4 +42,3 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = '__all__'
->>>>>>> e80affcdb11e9cf673abd3a6aad5b9cc18b5d935
