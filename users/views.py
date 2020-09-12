@@ -36,7 +36,7 @@ class LoginAPIView(generics.GenericAPIView):
 @api_view(['GET', 'PATCH'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def user_profile(request):
+def current_user_profile(request):
 
     try:
         profile =Profile.objects.get(user=request.user)
@@ -48,7 +48,7 @@ def user_profile(request):
         return Response(serializer.data)
 
     elif request.method == 'PATCH':
-        serializer = PorfileSerializer(
+        serializer = ProfileSerializer(
             profile, data=request.data, context={'request': request}, partial=True)
         if serializer.is_valid():
             serializer.save()
