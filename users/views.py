@@ -4,8 +4,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, authentication_classes, permission_classes
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
-from .models import Profile
-from .serializers import UserSerializer, RegisterSerializer, LoginSerializer, ProfileSerializer
+from .models import Profile, Message
+from .serializers import UserSerializer, RegisterSerializer, LoginSerializer, ProfileSerializer, ProfileImageSerializer, ReplySerializer, MessageSerializer
+from rest_framework import status
 
 
 class RegisterAPIView(generics.GenericAPIView):
@@ -15,6 +16,7 @@ class RegisterAPIView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        
         return Response({
             "user": UserSerializer(user, context=self.get_serializer_context()).data,
             "token": AuthToken.objects.create(user)[1]
@@ -32,25 +34,60 @@ class LoginAPIView(generics.GenericAPIView):
             "user": UserSerializer(user, context=self.get_serializer_context()).data,
             "token": AuthToken.objects.create(user)[1]
         })
-
-@api_view(['GET', 'PATCH'])
+@api_view(['PUT'])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
-def current_user_profile(request):
-
-    try:
-        profile =Profile.objects.get(user=request.user)
-    except Profile.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = ProfileSerializer(profile, context={'request': request})
+def update_profile(request):
+    profile=Profile.objects.get(user=request.user)
+    serializer = ProfileSerializer(
+        profile, data=request.data, context={'request': request}, partial=True)
+    if serializer.is_valid():
+        serializer.save()
         return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == 'PATCH':
-        serializer = ProfileSerializer(
-            profile, data=request.data, context={'request': request}, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def create_gallery_image(request):
+    serializer = ProfileImageSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_inbox(request):
+    messages= Message.objects.filter(recipient=request.user).order_by('-sent_at')
+    serializer = MessageSerializer(messages, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_sent(request):
+    messages= Message.objects.filter(sender=request.user).order_by('-sent_at')
+    serializer = MessageSerializer(messages, many=True)
+    return Response(serializer.data)
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def create_message(request):
+    serializer = MessageSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def create_reply(request):
+    serializer = ReplySerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
