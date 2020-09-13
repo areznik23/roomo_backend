@@ -50,7 +50,7 @@ def get_match(follower, followed):
         match.save()
         matched = True
 
-    serializer = FollowSerializer(follow)
+    serializer = UserSerializer(follow.followed)
     return {'match' : matched, 'follow': serializer.data}
 
 @api_view(['POST'])
@@ -59,11 +59,12 @@ def get_next_roommate(request):
     user_viewed = list(user.already_viewed_options.all())
     option_user = User.objects.get(pk = request.data.get("followed", {})["id"])
 
-    if not((request.data.get("followed", {})["id"] == 1 and len(user_viewed) == 0) or option_user == user):
-        user_option_view = UserOptionView(user = user, option = option_user)
-        user_option_view.save()
+    # if option_user != user and request.data.get("followed", {})["username"] != "place holder":
+    #     user_option_view = UserOptionView(user = user, option = option_user)
+    #     user_option_view.save()
 
     possible_options = list(User.objects.all())
+    possible_options = get_possible_roommates(user, possible_options)
     possible_options.remove(user)
     user_viewed_users = []
     for user_view in user_viewed:
@@ -71,15 +72,21 @@ def get_next_roommate(request):
 
     new_option = possible_options[random.randint(0, len(possible_options) - 1)]
     users_count = 1
-
     no_more_options = False
+
     while is_in_list(user_viewed_users, new_option, user):
-        new_option = possible_options[random.randint(0, len(possible_options) - 1)]
-        users_count += 1
+        
         if users_count >= len(possible_options):
             no_more_options = True
             new_option = None
             break
+
+        new_option = possible_options[random.randint(0, len(possible_options) - 1)]
+        users_count += 1
+
+    if new_option != None:
+        user_option_view = UserOptionView(user = user, option = new_option)
+        user_option_view.save()
 
     new_option_serializer = UserSerializer(new_option)
 
@@ -91,11 +98,8 @@ def get_next_roommate_no_follow(request):
     user_viewed = list(user.already_viewed_options.all())
     option_user = User.objects.get(pk = request.data.get("followed", 1)["id"])
 
-    if not((request.data.get("followed", {})["id"] == 1 and len(user_viewed) == 0) or option_user == user):
-        user_option_view = UserOptionView(user = user, option = option_user)
-        user_option_view.save()
-
     possible_options = list(User.objects.all())
+    possible_options = get_possible_roommates(user, possible_options)
     possible_options.remove(user)
     user_viewed_users = []
     for user_view in user_viewed:
@@ -103,15 +107,21 @@ def get_next_roommate_no_follow(request):
 
     new_option = possible_options[random.randint(0, len(possible_options) - 1)]
     users_count = 1
-
     no_more_options = False
+
     while is_in_list(user_viewed_users, new_option, user):
-        new_option = possible_options[random.randint(0, len(possible_options) - 1)]
-        users_count += 1
+        
         if users_count >= len(possible_options):
             no_more_options = True
             new_option = None
             break
+
+        new_option = possible_options[random.randint(0, len(possible_options) - 1)]
+        users_count += 1
+
+    if new_option != None:
+        user_option_view = UserOptionView(user = user, option = new_option)
+        user_option_view.save()
     
     new_option_serializer = UserSerializer(new_option)
 
@@ -131,11 +141,21 @@ def get_initial_option(request):
     return Response(new_option_serializer.data)
 
 def is_in_list(options, element, user):
+    logger.error(options)
+    logger.error(element)
     try:
         index = options.index(element)
+        logger.error(index)
     except ValueError:
         return False
     return True
 
 # May have a way to combine the two of these methods
 # Combine so that the follow is a standard function not a view
+
+def get_possible_roommates(user, all_users):
+    possible_roommates = []
+    for u in all_users:
+        if u.profile.university == user.profile.university and u.profile.gender == user.profile.gender:
+            possible_roommates.append(u)
+    return possible_roommates
