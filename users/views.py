@@ -4,8 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, authentication_classes, permission_classes, authentication_classes, permission_classes
 from knox.auth import TokenAuthentication
 from knox.models import AuthToken
-from .models import Profile, Message
-from .serializers import UserSerializer, RegisterSerializer, LoginSerializer, ProfileSerializer, ProfileImageSerializer, ReplySerializer, MessageSerializer
+from .models import Profile, Message, User
+from .serializers import UserSerializer, RegisterSerializer, LoginSerializer, ProfileSerializer, ProfileImageSerializer, ReplySerializer, MessageSerializer, CreateMessageSerializer, CreateReplySerializer
 from rest_framework import status
 
 
@@ -76,7 +76,7 @@ def get_sent(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def create_message(request):
-    serializer = MessageSerializer(data=request.data)
+    serializer = CreateMessageSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -86,8 +86,16 @@ def create_message(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def create_reply(request):
-    serializer = ReplySerializer(data=request.data)
+    serializer = CreateReplySerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def get_users(request):
+    users = User.objects.all()
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data)

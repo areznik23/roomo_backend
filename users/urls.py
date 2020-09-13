@@ -11,7 +11,8 @@ urlpatterns = [
     path('messages/inbox', get_inbox),
     path('messages/sent', get_sent),
     path('messages', create_message),
-    path('messages/reply', create_reply)
+    path('messages/reply', create_reply),
+    path('all', get_users)
 ]
 
 
