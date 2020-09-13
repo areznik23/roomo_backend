@@ -5,8 +5,7 @@ urlpatterns = [
     
    path('register', RegisterAPIView.as_view()),
     path('login', LoginAPIView.as_view()),
-    path('logout', LogoutView.as_view(), name='knox_logout'),
-    path('profile', user_profile)
+    path('logout', LogoutView.as_view(), name='knox_logout')
 ]
 
 
