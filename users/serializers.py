@@ -45,10 +45,15 @@ class LoginSerializer(serializers.Serializer):
         if user and user.is_active:
             return user
         raise serializers.ValidationError("Incorrect Credentials")
-class ReplySerializer(serializers.ModelSerializer):
+class CreateReplySerializer(serializers.ModelSerializer):
     class Meta:
         model=Reply
-        fields = ('id','sender', 'content')
+        fields = ('id','sender', 'content', 'message')
+class ReplySerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
+    class Meta:
+        model=Reply
+        fields = ('id','sender', 'content', 'message')
 class MessageSerializer(serializers.ModelSerializer):
     message_replies=ReplySerializer(many=True)
     time_posted = serializers.ReadOnlyField(source='get_date')
@@ -58,3 +63,8 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ('id', 'content','sender', 'recipient','time_posted', 'message_replies')
+
+class CreateMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ('id', 'content','sender', 'recipient')
