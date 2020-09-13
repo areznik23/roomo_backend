@@ -8,6 +8,9 @@ from .models import Profile, Message, User
 from .serializers import UserSerializer, RegisterSerializer, LoginSerializer, ProfileSerializer, ProfileImageSerializer, ReplySerializer, MessageSerializer, CreateMessageSerializer, CreateReplySerializer
 from rest_framework import status
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class RegisterAPIView(generics.GenericAPIView):
     serializer_class = RegisterSerializer
@@ -96,6 +99,17 @@ def create_reply(request):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def get_users(request):
-    users = User.objects.all()
+    user = User.objects.get(pk = request.GET.get('pk', 1))
+    user_matches_first = list(user.first_user_matches.all())
+    user_matches_second = list(user.second_user_matches.all())
+    logger.error(request.GET.get('pk', 0))
+    logger.error(user_matches_second)
+    users = []
+    for um in user_matches_first:
+        users.append(um.second_user)
+
+    for um in user_matches_second:
+        users.append(um.first_user)
+
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
