@@ -1,13 +1,18 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .models import Profile
+from .models import Profile,  ProfileImage, Message, Reply
 
 User._meta.get_field('email')._unique = True
+class ProfileImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProfileImage
+        fields =('id', 'image','profile')
 class ProfileSerializer(serializers.ModelSerializer):
+    gallery_images = ProfileImageSerializer(many=True)
     class Meta:
         model = Profile
-        fields = ('id','bio', 'gender', 'image',  'loudness', 'athleticism','musicality','university')
+        fields = ('id','bio', 'gender', 'image',  'loudness', 'athleticism','musicality','university','gallery_images')
 
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer()
@@ -40,3 +45,16 @@ class LoginSerializer(serializers.Serializer):
         if user and user.is_active:
             return user
         raise serializers.ValidationError("Incorrect Credentials")
+class ReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Reply
+        fields = ('id','sender', 'content')
+class MessageSerializer(serializers.ModelSerializer):
+    message_replies=ReplySerializer(many=True)
+    time_posted = serializers.ReadOnlyField(source='get_date')
+    
+    recipient=UserSerializer(read_only=True)
+    sender=UserSerializer(read_only=True)
+    class Meta:
+        model = Message
+        fields = ('id', 'content','sender', 'recipient','time_posted', 'message_replies')
